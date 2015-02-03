@@ -1,0 +1,6 @@
+library("ggplot2", lib.loc="~/R/x86_64-pc-linux-gnu-library/3.1")
+library("gplots", lib.loc="~/R/x86_64-pc-linux-gnu-library/3.1")
+library("RCurl", lib.loc="~/R/x86_64-pc-linux-gnu-library/3.1")
+library("plyr", lib.loc="~/R/x86_64-pc-linux-gnu-library/3.1")
+library("grid", lib.loc="/usr/lib/R/library")
+library("reshape2", lib.loc="~/R/x86_64-pc-linux-gnu-library/3.1")

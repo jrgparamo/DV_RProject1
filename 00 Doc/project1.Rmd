@@ -4,11 +4,13 @@ output: html_document
 ---
 ###Connect to the Oracle Database###
 
+The following line of R code accesses an R file in the project and runs the code. The source code, *project1.R*, loads the RCurl package in order to be able to query data from the Oracle database then, the four tables are called and stored in data frames with their corresponding names.
 ```{r}
 source("../01 Data/project1.R", echo=TRUE)
 ```
 
 ###Display Data Frames###
+The loaded data frames are displayed using the *head()* function to show a few of the top entries for each data frame.
 ```{r}
 head(customers)
 head(items)
@@ -16,16 +18,27 @@ head(order_details)
 head(orders)
 ```
 
-
 ###Interesting Plots###
+Each of the data frames is used to create a unique plot.
+
+The customer city of the order is plotted agains the customer state. This provides a simple view of where the market of the albums resides.
 ```{r}
 library(ggplot2)
 ggplot(customers, aes(x=CUSTOMER_STATE, y=CUSTOMER_CITY, color=CUSTOMER_ZIP)) + geom_point()
+```
 
-ggplot(items, aes(x=ARTIST, y=UNIT_PRICE)) + geom_bar(stat="identity")
+The unit price of the albums of each of the artists is displayed in a bar graph. The bar graph was accomplished by adding the geometric layer *+ geom_bar(stat="identity")* to the plotting parameters.
+```{r}
+ggplot(items, aes(x=as.factor(ARTIST), y=UNIT_PRICE)) + geom_bar(stat="identity")
+```
 
+The item id of each album is plotted against its corresponding order quantity as a bar graph. This allows for a simple comparison of the sales of each album.
+```{r}
 ggplot(order_details, aes(x=ITEM_ID, y=ORDER_QTY)) + geom_bar(stat="identity")
+```
 
+The number of days it takes for an order to ship after the order date is displayed by a bar graph. To do this, the days of shipped dates were subtracted from the days of order dates. The dates that ovelapped months were individually accounted for and adjusted manually. It certainly would have been easier to setup *if-then conditional* to automatically configure the negative dates. However, since the data was not too large it was just as easy to manually enter in the days. This plot displays how processing times for the album orders vary over the year.
+```{r}
 MONTHS <- as.numeric(substring(orders[,3], 6, 7))
 DAYS <- as.numeric(substring(orders[,4], 9, 10)) - as.numeric(substring(orders[,3], 9, 10))
 DAYS[5] <- 10
@@ -45,13 +58,17 @@ ggplot(orders, aes(x=MONTHS, y=DAYS)) + geom_bar(stat="identity")
 ```
 
 ###Query###
+The following R code runs a query for the same data but joins all the columns together into one data frame. The head of the table is displayed.
 ```{r}
 entire <- data.frame(eval(parse(text=substring(getURL(URLencode('http://129.152.144.84:5001/rest/native/?query="select * from orders o join customers c on o.customer_id = c.customer_id join order_details d on o.order_id = d.order_id join items i on d.item_id = i.item_id"'), httpheader=c(DB='jdbc:oracle:thin:@129.152.144.84:1521/PDB1.usuniversi01134.oraclecloud.internal', USER='DV_ORDERS', PASS='orcl', MODE='native_mode', MODEL='model', returnFor = 'R', returnDimensions = 'False'), verbose = TRUE), 1, 2^31-1))))
 
 head(entire)
 ```
 
-###Produce Plots###
+###Reproduce Plots###
+To reproduce the given plots, the previous data frame that contains all the data was used. The values to plot were determined from the x- and y-axes labels of the given plots. The shipped dates of each order were plotted against the order dates using a dot plot and partitioned with respect to the states the orders came from. The partitioning was accomplished by adding *+facet_wrap(~CUSTOMER_STATE)* as a layer to the original plots.
+
+The three plots display the same data. The only difference between them is the labeling of each data point. In the first plot, the unit price of the order determined the coloring of each data point, in the second, the title of the order, and in the third, the artist. The coloring scheme was added as an optional input of aesthetic mapping to the layer that creates the dot plot, *+ geom_point()*. The input was *aes(color=as.factor(*<property>*))*, where *<property>* is the specific variable that defines how each data point is colored, as described above. 
 ```{r, warning=FALSE}
 ggplot(entire, aes(x=as.Date(ORDER_DATE, "%Y-%m-%d"), y=as.Date(SHIPPED_DATE, "%Y-%m-%d"))) + geom_point(aes(color=as.factor(UNIT_PRICE))) + facet_wrap(~CUSTOMER_STATE)
 
